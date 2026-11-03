@@ -52,6 +52,12 @@ Lastly,
 
 This is because once a node has been marked as internal in the convex hull, we cannot unwrap the hull in such a way as to make that node a member on the convex hull. Notice that this is not the case for the converse. Nodes that are on the convex hull, can lose their _convexity status_ as we analyze more points along the simple chain. We discuss this in the next section.
 
+We can also say that we will have at least 3 points in a valid output, meaning that, with the duplicate top and bottom points, we have:
+
+> [!IMPORTANT]
+>
+> 4. `len(melk_out[i])` $\ge 4 \space \forall i \in [0,$ `len(melk_out)`$]$
+
 ## What happens at each step
 
 Now, let's analyze what can happen at a given step `i`.
@@ -78,6 +84,8 @@ Now, let's dive into the cases:
 
 #### Case A
 
+---
+
 This one is pretty trivial. We know that for a previous arrangement called `prev := melk_out[i-1]`, and a new point `s`, we will have the following form:
 
 > [!IMPORTANT]
@@ -87,6 +95,8 @@ This one is pretty trivial. We know that for a previous arrangement called `prev
 This follows directly from the definition of Case A. We are _preserving_ everything that we had previously, and **adding** the new point to the convex hull.
 
 #### Case B
+
+---
 
 Case B is our internal case. From the initial look, it's really simple. To be internal, is to be omitted from the convex hull. Meaning, to detect if we are in **Case B**, we just need to check if
 
@@ -117,4 +127,80 @@ On our diagram above, that is the pocket between points `p` and `q`.
 This implies that:
 
 > [!IMPORTANT]
-> There is always a pocket between `melk_out[i][1]` and `melk_out[i][-2]` because the difference $ p-q > 1$
+> There is always a pocket between `melk_out[i][1]` and `melk_out[i][-2]` because the difference $ p-q > 1$, meaning that at any point, we can encounter **Case B**.
+
+#### Case C
+
+---
+
+This is the unwrapping case. The term _unwrapping_ here means that we are popping off nodes sequentially from our convex hull.
+
+Tying our problem back to the Melkman Algorithm, this happens in the left test loop, which continually pops off points from either the top or the bottom of the deque (or both).
+
+This implies that the middle of a sandwich at step `i` must be a subsequence of the step at `i-1`. Formally:
+
+> [!IMPORTANT]
+>
+> `melk_out[i][1:-2]` is a substring of `melk_out[i-1]`
+
+This, paired with our **trivial invariant 4** means that at any step, we can unwrap to a triangle. This is interesting, because though it is not always true for a particular instance, it _is_ always true for the decision problem, because you can redraw your chain by making some edges shorter, until
+
+![alt text](image-3.png)
+
+> Example of the above statement. Given the chain on the left, there is no way to make force the deque <5,1,0,5>. However, if we just perturb 0 to left and 1 to the right, we can force it, while preserving the output we had prior to considering point 5.
+
+Notice that **Case A** is actually a special **Case of C**, since it is the case where we continually unwrap 0 points.
+
+Another thing we notice is that: the point `p` that we are considering must be connected to the point `q := max(melk_out[i][1:-2])`. This leads us to the necessary condition that:
+
+> [!IMPORTANT]
+> `melk_out[i][1] == max(melk_out[i][1:-2]) or melk_out[i][-2] == max(melk_out[1:-2])`
+
+> Proof:
+> Since the point indices are always increasing, the path from point `q` must be connected to `q+1`, which must be connected to `q+2` and so on. Eventually, `q` must be connected via a path to our new max point `p`. If `p > q+1`, we have a pocket. Otherwise, `p == q=1`. A connection is denoted by the adjacency in `melk_out[i]`. Following revised invariant 1, `p` is at `melk_out[i][0]` and `melk_out[i][-1]`. For it to be connected to this point `q`, that point must be adjacent in the `melk_out[i]` array, leaving contender indices `1` or `-2`.
+
+#### Are we done?
+
+---
+
+We are **almost** done! We have covered and proved some necessary conditions for the simple chain, but how do we know that these conditions are sufficient? Not yet.
+
+So far, we analyzed simple cases for a chain that was never internal. However, the following instance follows all of our invariants, but it is not valid. Consider the following input:
+
+```python
+melk_out = [
+    [2,1,0,2],
+    [2,1,0,2],
+    [4,1,0,2,4]
+]
+```
+
+Let's check based on our invariants:
+
+1. `i = 0, melk_out[i] = [2,1,0,2]` is one of two valid starts $\checkmark$
+
+2. `i = 1, melk_out[i] = [2,1,0,2]` We notice that `melk_out[i=1] == melk_out[i == 0]`, meaning that we are in **Case B**. Since we said that this could occur at any chain, this is still valid. $\checkmark$
+
+3. `i = 2, melk_out[i] = [4,1,0,2,4]`. Let's check:
+   a. Biggest point is on the outsides of the sandwich $\checkmark$
+   b. The middle of the sandwich is a substring of the previous answer $\checkmark$
+   c. The `max` of the middle of the sandwich should be at index 1 or -2 $\checkmark$
+   d. `len(melk_out[i]) > 4` $\checkmark$
+   e. At this point, skipped = `{3}`, and `melk_out[i]` does not contain 3. $\checkmark$
+   f. There are no duplicates other than the outside of the sandwich $\checkmark$
+
+All invariant checks pass, so we're good, right?
+
+False! This instance actually corresponds to the following self-crossing chain (and any isomorphic instance thereof).
+
+![alt text](image-4.png)
+
+So what did we miss? When our previous step is internal, then we have an extra constraint. Given that `melk_out[i-1]` is internal, `melk_out[i]` has the additional constraint that, if it was not also internal (ie if not `melk_out[i-1] == melk_out[i]`), then `i` can only emerge from the pocket. We can write this in the following way
+
+> [!IMPORTANT]
+>
+> Given the flag `prev_internal == True` that denotes whether `melk_out[i-1]` was marked as an internal point, we cannot have that `melk_out[i][1] - melk_out[i][-2] == 1`.
+
+> Proof:
+> This follows from our definition of a pocket. This would mean that the point we just considered, point `p := i+2` self intersected at the _direct_ edge `melk_out[i][1]` to `melk_out[i][-2]`. This, exactly, is the definition of self-intersection.
+> **But why does it have to be `melk_out[i][1] - melk_out[i][-2] == 1` and not their absolute value?**
