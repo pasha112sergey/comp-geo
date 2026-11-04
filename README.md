@@ -182,11 +182,17 @@ Let's check based on our invariants:
 2. `i = 1, melk_out[i] = [2,1,0,2]` We notice that `melk_out[i=1] == melk_out[i == 0]`, meaning that we are in **Case B**. Since we said that this could occur at any chain, this is still valid. $\checkmark$
 
 3. `i = 2, melk_out[i] = [4,1,0,2,4]`. Let's check:
+
    a. Biggest point is on the outsides of the sandwich $\checkmark$
+   
    b. The middle of the sandwich is a substring of the previous answer $\checkmark$
+   
    c. The `max` of the middle of the sandwich should be at index 1 or -2 $\checkmark$
+   
    d. `len(melk_out[i]) > 4` $\checkmark$
+   
    e. At this point, skipped = `{3}`, and `melk_out[i]` does not contain 3. $\checkmark$
+   
    f. There are no duplicates other than the outside of the sandwich $\checkmark$
 
 All invariant checks pass, so we're good, right?
