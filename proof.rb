@@ -53,7 +53,7 @@ def connected_to_max?(cur)
 end
 
 def broken_edge_upon_exiting_pocket?(cur)
-  if (cur[1] - cur[-2]) == 1
+  if (cur[1] - cur[-2]).abs == 1 && cur.length != 4
     raise "#{cur} failed because prev was inside, and cur broke a sequential edge"
   end
   true

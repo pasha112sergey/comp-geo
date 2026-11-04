@@ -195,12 +195,28 @@ False! This instance actually corresponds to the following self-crossing chain (
 
 ![alt text](image-4.png)
 
-So what did we miss? When our previous step is internal, then we have an extra constraint. Given that `melk_out[i-1]` is internal, `melk_out[i]` has the additional constraint that, if it was not also internal (ie if not `melk_out[i-1] == melk_out[i]`), then `i` can only emerge from the pocket. We can write this in the following way
+So what did we miss? When our previous step is internal, then we have an extra constraint. Given that `melk_out[i-1]` is internal, `melk_out[i]` has the additional constraint that, if it was not also internal (ie if not `melk_out[i-1] == melk_out[i]`), then `i` can only emerge from the pocket. Intuitively, this means that we can come out of a chain and unwrap a pocket up until we make the convex hull a triangle.
+
+We can write this in the following way
 
 > [!IMPORTANT]
 >
-> Given the flag `prev_internal == True` that denotes whether `melk_out[i-1]` was marked as an internal point, we cannot have that `melk_out[i][1] - melk_out[i][-2] == 1`.
+> Given the flag `prev_internal == True` that denotes whether `melk_out[i-1]` was marked as an internal point, we cannot have that `abs(melk_out[i][1] - melk_out[i][-2]) == 1`, unless `len(melk_out) == 4`.
 
 > Proof:
-> This follows from our definition of a pocket. This would mean that the point we just considered, point `p := i+2` self intersected at the _direct_ edge `melk_out[i][1]` to `melk_out[i][-2]`. This, exactly, is the definition of self-intersection.
-> **But why does it have to be `melk_out[i][1] - melk_out[i][-2] == 1` and not their absolute value?**
+> We know that a point `s` can only be in an internal state if it entered a pocket. A pocket is defined by a convex hull edge from `p` to `q`, which we will call the _mouth_ of the pocket. WLOG, suppose `p` is on the left of `s`, and `q` is on its right, and `q > p`.
+>
+> ![alt text](image-5.png)
+>
+> When `s` comes out, it necessarily must come out through the _mouth_ of the pocket, unwrapping an arbitrary amount of points from its left and its right. Notice that this unwrapping _travels_ in opposite directions, meaning that the difference of `p` and `q` is never 1, until precisely the moment when we unwrap to the triangle convex hull with `p*` and `q*` forming an edge (with their difference being 1). This means that at all times when `s` unwraps the convex hull to an `n`-gon with `n > 3`, the left point `p*` and right point `q*` must be separated by a distance $\ge 1$.
+
+Now, we have analyzed everything that a valid chain can do. In summary, any node we should consider iteratively can do one of 4 valid things:
+
+1. Continue the convex hull without updating the convexity of previous nodes
+2. Become, internal to the convex hull
+3. If it was internal to the convex hull previously, it can stay internal, or legally exit through a pocket.
+4. Unwrap an arbitrary amount of points from the left and or the right side of the hull.
+
+## Time Complexity
+
+Now, the algorithm in `proof.rb` runs in `O(m * n)` time by checking all of the _Important!_ invariants, where `m` is the number of Melkman iterations, and `n` is the max length of each iteration. Each invariant check is `O(n)`, which we perform `m` times, resulting in `O(m*n)`
