@@ -34,7 +34,7 @@ Since Melkman's algorithm keeps a deque data structure, all of our arrays must b
 
 > [!Important]
 >
-> 1. Each array `melk_out[i]` must be of form `[n, ..., n]` for some integer `n`, `i` $\in$ `[0, length(melk_out) + 2]`
+> 1. Each array `melk_out[i]` must be of form `[n, ..., n]` for some integer `n`, `i` $\in$ `[0, len(melk_out)]`
 
 Next, we have
 
@@ -42,7 +42,7 @@ Next, we have
 >
 > 2. `melk_out[i][1:-1]` cannot have duplicates
 
-The proof for this is trivial. If a point `j` is present two or more times in the middle of the sandwich, it implies that it shows up at two or more places on the convex hull, which is impossible. Each point can only be present at at most on place on the boundary of the convex hull.
+> The proof for this is trivial. If a point `j` is present two or more times in the middle of the sandwich, it implies that it shows up at two or more places on the convex hull, which is impossible. Each point can only be present at at most on place on the boundary of the convex hull.
 
 Lastly,
 
@@ -50,7 +50,7 @@ Lastly,
 >
 > 3. Given a set `skipped[i]: Set<Integer>`, corresponding to all the nodes that were marked internal before the `i+2`th point was considered, `melk_out[i]` $\bigcap$ `skipped[i]` == `{ }` (empty set)
 
-This is because once a node has been marked as internal in the convex hull, we cannot unwrap the hull in such a way as to make that node a member on the convex hull. Notice that this is not the case for the converse. Nodes that are on the convex hull, can lose their _convexity status_ as we analyze more points along the simple chain. We discuss this in the next section.
+This is because once a node has been marked as internal in the convex hull, we cannot unwrap the hull in so as to make that node a member on the convex hull again. Notice that this is not the case for the converse. Nodes that are on the convex hull, can lose their _convexity status_ as we analyze more points along the simple chain. We discuss this in the next section through the concept of _unwrapping the hull_.
 
 We can also say that we will have at least 3 points in a valid output, meaning that, with the duplicate top and bottom points, we have:
 
@@ -72,7 +72,7 @@ Visually, the cases look like the following:
 ![alt text](image.png)
 
 > Imagine that the convex hull is abstractly represented by the curved line, with `q` < `p`
-> Note that case C could unwrap from either side of the convex hull - removing either from the left, or the right in this example. We will prove that these cases are identical, and, can therefore be labeled the same.
+> Note that case C could unwrap from either side of the convex hull - removing either from the left, or the right in this example. These cases are symmetrical, and, can therefore be identically labeled.
 
 Before we start, notice that in every case other than **Case B**, the point will be on the new deque of the convex hull. This leads us to the revision of our first invariant
 
@@ -104,13 +104,11 @@ Case B is our internal case. From the initial look, it's really simple. To be in
 >
 > **Case B** can be uniquely identified at step `i` if `melk_out_[i] == melk_out[i-1]`.
 
-Can **Case B** always happen? Yes! This is because the convex hull always has a pocket between the first point and the last point. In Melkman notation, this means that
-
-On our diagram above, that is the pocket between points `p` and `q`.
+Can **Case B** always happen? Yes! This is because the convex hull always has a pocket between the first point and the last point. On the diagram above, that is the pocket between points `p` and `q`.
 
 > [!IMPORTANT]
 >
-> In fact, we can detect a pocket by the fact that on the convex hull, the difference between two _(circularly)_ adjacent vertices is more than 1.
+> In fact, we can detect a pocket by the fact that on the convex hull, the difference between two _circularly_ adjacent vertices is more than 1.
 
 > Proof:
 > Given a convex hull of a simple, non-crossing, integer indexed chain, we know that if the difference between two adjacent vertices `p` and `q` (with `p` < `q`) is 1, then the `p` directly is connected to `q`. The term _directly_ connected means that the edge from `p` to `q` on the chain is exactly the edge from `p` to `q` on the convex hull. This follows from the fact that the chain is connected and indexed in a sequential manner.
@@ -143,11 +141,11 @@ This implies that the middle of a sandwich at step `i` must be a subsequence of 
 >
 > `melk_out[i][1:-2]` is a substring of `melk_out[i-1]`
 
-This, paired with our **trivial invariant 4** means that at any step, we can unwrap to a triangle. This is interesting, because though it is not always true for a particular instance, it _is_ always true for the decision problem, because you can redraw your chain by making some edges shorter, until
+This, paired with our **trivial invariant 4** means that at any step, we can unwrap to a triangle. This is interesting, because though it is not always true for a particular instance, it _is_ always true for the decision problem. This is because you can redraw your chain by making some edges shorter and some edges longer, in a way that exposes the triangle. Note that we can always unwrap to any direct edge, but we may not be able to unwrap to an arbitrary indirect edge.
 
 ![alt text](image-3.png)
 
-> Example of the above statement. Given the chain on the left, there is no way to make force the deque <5,1,0,5>. However, if we just perturb 0 to left and 1 to the right, we can force it, while preserving the output we had prior to considering point 5.
+> Example of the above statement. Given the chain on the left, there is no way to make force the deque <5,1,0,5>. However, if we just perturb 0 to left and 1 to the right, we can force it, while preserving the output we had prior to considering point 5. We cannot, however, unwrap to a triangle with points 5, 2, 0, since point 1 must remain a convex point.
 
 Notice that **Case A** is actually a special **Case of C**, since it is the case where we continually unwrap 0 points.
 
@@ -157,13 +155,13 @@ Another thing we notice is that: the point `p` that we are considering must be c
 > `melk_out[i][1] == max(melk_out[i][1:-2]) or melk_out[i][-2] == max(melk_out[1:-2])`
 
 > Proof:
-> Since the point indices are always increasing, the path from point `q` must be connected to `q+1`, which must be connected to `q+2` and so on. Eventually, `q` must be connected via a path to our new max point `p`. If `p > q+1`, we have a pocket. Otherwise, `p == q=1`. A connection is denoted by the adjacency in `melk_out[i]`. Following revised invariant 1, `p` is at `melk_out[i][0]` and `melk_out[i][-1]`. For it to be connected to this point `q`, that point must be adjacent in the `melk_out[i]` array, leaving contender indices `1` or `-2`.
+> Since the point indices are always increasing, the path from point `q` must be connected to `q+1`, which must be connected to `q+2` and so on. Eventually, `q` must be connected via a path to our new max point `p`. If `p > q+1`, we have a pocket. Otherwise, `p == q+1`. A connection is denoted by an adjacency in `melk_out[i]`. Following revised invariant 1, `p` is at `melk_out[i][0]` and `melk_out[i][-1]`. For it to be connected to this point `q`, that point must be adjacent in the `melk_out[i]` array, leaving contender indices `1` or `-2`.
 
 #### Are we done?
 
 ---
 
-We are **almost** done! We have covered and proved some necessary conditions for the simple chain, but how do we know that these conditions are sufficient? Not yet.
+We are **almost** done! We have covered and proved some necessary conditions for the simple chain, but how do we know that these conditions are sufficient? Well, we won't be able to, because they are not yet sufficient!
 
 So far, we analyzed simple cases for a chain that was never internal. However, the following instance follows all of our invariants, but it is not valid. Consider the following input:
 
@@ -181,23 +179,23 @@ Let's check based on our invariants:
 
 2. `i = 1, melk_out[i] = [2,1,0,2]` We notice that `melk_out[i=1] == melk_out[i == 0]`, meaning that we are in **Case B**. Since we said that this could occur at any chain, this is still valid. $\checkmark$
 
-3. `i = 2, melk_out[i] = [4,1,0,2,4]`. Let's check:
+3. `i = 4, melk_out[i] = [4,1,0,2,4]`. Let's check:
 
-   a. Biggest point is on the outsides of the sandwich $\checkmark$
-   
-   b. The middle of the sandwich is a substring of the previous answer $\checkmark$
-   
-   c. The `max` of the middle of the sandwich should be at index 1 or -2 $\checkmark$
-   
-   d. `len(melk_out[i]) > 4` $\checkmark$
-   
-   e. At this point, skipped = `{3}`, and `melk_out[i]` does not contain 3. $\checkmark$
-   
-   f. There are no duplicates other than the outside of the sandwich $\checkmark$
+    a. `i` is on the outsides of the sandwich $\checkmark$
+
+    b. The middle of the sandwich is a substring of the previous entry $\checkmark$
+
+    c. The `max` of the middle of the sandwich should be at index 1 or -2 $\checkmark$
+
+    d. `len(melk_out[i]) >= 4` $\checkmark$
+
+    e. At this point, skipped = `{3}`, and `melk_out[i]` does not contain 3. $\checkmark$
+
+    f. There are no duplicates other than the outside of the sandwich $\checkmark$
 
 All invariant checks pass, so we're good, right?
 
-False! This instance actually corresponds to the following self-crossing chain (and any isomorphic instance thereof).
+Nope! This instance actually corresponds to the following self-crossing chain (and any isomorphic instance thereof).
 
 ![alt text](image-4.png)
 
@@ -210,11 +208,11 @@ We can write this in the following way
 > Given the flag `prev_internal == True` that denotes whether `melk_out[i-1]` was marked as an internal point, we cannot have that `abs(melk_out[i][1] - melk_out[i][-2]) == 1`, unless `len(melk_out) == 4`.
 
 > Proof:
-> We know that a point `s` can only be in an internal state if it entered a pocket. A pocket is defined by a convex hull edge from `p` to `q`, which we will call the _mouth_ of the pocket. WLOG, suppose `p` is on the left of `s`, and `q` is on its right, and `q > p`.
+> We know that a point `s'` can only be in an internal state if it entered a pocket. A pocket is defined by a convex hull edge from `p` to `q`, which we will call the _mouth_ of the pocket. WLOG, suppose `p` is on the left of `s`, and `q` is on its right, and `q > p`.
 >
 > ![alt text](image-5.png)
 >
-> When `s` comes out, it necessarily must come out through the _mouth_ of the pocket, unwrapping an arbitrary amount of points from its left and its right. Notice that this unwrapping _travels_ in opposite directions, meaning that the difference of `p` and `q` is never 1, until precisely the moment when we unwrap to the triangle convex hull with `p*` and `q*` forming an edge (with their difference being 1). This means that at all times when `s` unwraps the convex hull to an `n`-gon with `n > 3`, the left point `p*` and right point `q*` must be separated by a distance $\ge 1$.
+> When `s := s'+1` comes out, it necessarily comes out through the _mouth_ of the pocket, unwrapping an arbitrary amount of points from its left and right. Notice that this unwrapping _travels_ in opposite directions, meaning that the difference of `p` and `q` is never 1, until precisely the moment when we unwrap to the triangle convex hull with `p*` and `q*` forming a direct edge (with their difference being 1). This means that at all times when `s` unwraps the convex hull to an `n`-gon with `n > 3`, the left point `p*` and right point `q*` must be separated by a distance $\ge 1$.
 
 Now, we have analyzed everything that a valid chain can do. In summary, any node we should consider iteratively can do one of 4 valid things:
 
@@ -222,6 +220,8 @@ Now, we have analyzed everything that a valid chain can do. In summary, any node
 2. Become, internal to the convex hull
 3. If it was internal to the convex hull previously, it can stay internal, or legally exit through a pocket.
 4. Unwrap an arbitrary amount of points from the left and or the right side of the hull.
+
+It can't do anything else, which means that it is sufficient.
 
 ## Time Complexity
 
